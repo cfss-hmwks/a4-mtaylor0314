@@ -1,0 +1,201 @@
+---
+title: "Assignment 4"
+author: "Max Taylor"
+date: "2025-07-05"
+output: html_document
+---
+
+Part 1: Selecting data
+For this portion, you need to use ONE of TWO available datasets: either the dataset from A3 (gdp_Bihar.csv) or from the babynames package (be sure to install bbabynames). Both datasets have a temporal component. You need to use the same dataset for the entire assignment.
+
+```{r}
+#Reading Excel File
+gdp_bihar <- read.csv("gdp_Bihar.csv")
+district_Categories <- read.csv("district_categories.csv")
+```
+
+
+Part 2: Visualizing summaries
+
+```{r}
+#Downloading Visual Packages/Tidyverse
+library(ggplot2)
+library(dplyr)
+library(tidyverse)
+```
+
+
+2.1: Plot
+Getting started: gdp_Bihar.csv
+
+Create a line plot of average growth rate over time by category
+X: year, Y: mean growth rate (%), color: category
+Add both geom_point() and geom_line()
+
+
+```{r}
+#Make a new Table
+Table2 <- gdp_bihar %>%
+  filter(Description == "Growth Rate % (YoY)") %>%
+  pivot_longer(cols = -c(Year, Description), 
+               names_to = "District", 
+               values_to = "Growth_Rate")
+
+
+# Calculate mean growth rate per year
+mean_growth_by_year <- Join_Table %>%
+  group_by(Year,category) %>%
+  summarise(mean_growth = mean(Growth_Rate, na.rm = TRUE))
+
+#Join Datasets
+Join_Table <- left_join(Table2, district_Categories, by = c("District" = "district"))
+
+
+# Plot
+ggplot(mean_growth_by_year, aes(x = Year, y = mean_growth, color = category)) +
+  geom_point() +
+  geom_line() +
+  labs(
+    title = "Average GDP Growth Rate Over Time (YoY)",
+    x = "Year",
+    y = "Mean Growth Rate (%)"
+  ) +
+  theme_minimal()
+
+```
+
+
+
+
+
+2.2 Reflect:
+What happens to the plot? Are the lines as expected? Do you need to do any additional modifications or calculations?
+Use an AI assistant (e.g. ChatGPT) to help diagnose and fix the issue:
+
+The lines are not expected. I recieved a message from R saying that each group only consisted of 1 observation and asking me if I needed to address the aesthetic. After using AI and asking why geom_line() was not properly rendering, it was likely due to a missing group aesthetic included in my code or a non-numeric/non-ordered year column.
+
+Provide your prompt
+(eg. I am trying to create a line plot using ggplot2 in R. My dataset has columns: year, mean_growth_rate_pct, category. I used geom_line() but . What could be the problem? How do I modify to fix this? )
+
+I am trying to create a line plot using ggplot 2, but the geom_line() functon is not showing properly. How should I fix this? The dataset I used includes year, mean growth rate.
+
+Include the AI’s response
+Describe how you applied or modified the advice
+
+"If you're trying to use geom_line() and your plot isn't rendering properly, it’s likely due to a non-numeric or non-ordered year column, or a missing group aesthetic when plotting by category."
+
+2.3 Update your plot:
+Include the correct grouping aesthetic
+Apply a theme other than the default (eg. theme_classic())
+Add a title and subtitle
+Clearly label your axes
+
+```{r}
+#Updated Plot
+ggplot(mean_growth_by_year, aes(x = Year, y = mean_growth, color = category)) +
+  geom_point() +
+  geom_line() +
+  labs(
+    title = "Average GDP Growth Rate Over Time (YoY)",
+    x = "Year",
+    y = "Mean Growth Rate (%)"
+  ) +
+  theme_classic()
+```
+
+
+2.4 Create an additional plot in an alternative style:
+Create a different style plot (e.g. stacked bar chart, boxplot) that could show this data in another way
+Reflect on the strengths and limitations of both plot types
+
+I made a boxplot which does a good job of showing the variation and outliers of mean growth rate by each category. The boxplot is also good for measuring the distribution of mean growth rate rather than just how the mean growth rates have changed over the years, like in the initial line plot. However, that is also one of the weaknesses, that the boxplot does not allow us to specify a certain interval of time to see changes in the mean GDP growth rate like we see in the line plot.
+
+```{r}
+#Alternative Visual
+ggplot(mean_growth_by_year, aes(x = category, y = mean_growth)) +
+  geom_boxplot(fill = "lightblue", color = "darkblue") +
+  labs(
+    title = "Distribution of Growth Rates by Category",
+    x = "Category",
+    y = "Mean Growth Rate (%)"
+  ) +
+  theme_classic()
+```
+
+
+
+Part 3: Open-ended transformation and visualization
+Design and implement two additional transformations or summaries. Here are some possible options for each of the two paths. You are welcome to try out other ideas as well!
+
+gdp_Bihar.csv
+Summarize GDP or growth rate by another variable combination
+Create a new derived variable
+Calculate year-over-year changes
+
+```{r}
+#Summarize by Year and Category
+Table3 <- mean_growth_by_year %>%
+  group_by(Year, category) %>%
+  summarise(mean_growth = mean(mean_growth, na.rm = TRUE))
+
+#Create a new column classifying growth rate
+Table3 <- Table3 %>%
+  mutate(growth_class = ifelse(mean_growth > 5, "High", "Low")) 
+```
+
+
+
+
+3.1 Visualize your result:
+Use two different plot types than before (some possibilities include histograms, bar plots, line plots, and density plots)
+Clearly label and style your plots
+
+```{r}
+#Histogram of growth rates by class
+ggplot(Table3, aes(x = mean_growth, fill = growth_class)) +
+  geom_histogram(bins = 20, position = "stack", color = "black") +
+  labs(
+    title = "Histogram of District-Year Growth Rates by Class",
+    x = "Mean Growth Rate (%)",
+    y = "# of Districts"
+  ) +
+  scale_fill_manual(values = c("High" = "skyblue", "Low" = "salmon")) +
+  theme_minimal()
+```
+```{r}
+#Bar Chart of Averages
+ggplot(Table3, aes(x = growth_class, y = mean_growth, fill = growth_class)) +
+  geom_col(width = 0.6) +
+  labs(
+    title = "Average Growth Rate by Class",
+    x = "Growth Classification",
+    y = "Average Growth Rate (%)"
+  ) +
+  scale_fill_manual(values = c("High" = "skyblue", "Low" = "salmon")) +
+  theme_minimal()
+```
+
+
+
+3.2 Write-up:
+What question(s) were you exploring?
+
+I wanted to see how the distribution of growth rates on a yearly basis are distributed. That is why I created a criteria of anything above a 5% GDP growth rate needing to classified as high growth, with anything lower being classified as low growth. 
+
+Why did you choose this transformation/summary?
+
+I thought by seeing the difference in the way "high growth" district perform against the way that "low growth" districts perform could help uncover any inequalities in growth distribution among all the areas provided in the dataset.
+
+Why did you choose this type of plot?
+
+The histogram was chosen because it showed me the number of districts at which were experiencing specific rates of growth, and whether they were "low growth" or "high" growth districts. The histogram also provided any outliers for categories that were performing significantly better or worse than others.
+
+A bar chart is a good way of getting a clear idea of quantifiable variables and provided an easy way to see any discrepancies in the difference in mean growth rates experienced by high and low growth districts. A boxplot plot provides a very neat ad organized way of showing the groups I wanted to compare.
+
+
+
+What did you learn from your plot?
+
+The histogram helped me learn that there are a large number of "low growth" districts experiencing growth rates which are lower than -50%. That was alarming to me because that really showcased a deep level of poverty for those groups which seems to only get worse year in year out.
+
+Additionally, my bar chart helped quantify how much better high growth districts perform versus the low growth districts. There were a significantly stark difference in the average growth rate for low growth districts than high. It shows that low growth districts likely need more prioritization when it comes to economic support in order to bridge the gap between these groups.
